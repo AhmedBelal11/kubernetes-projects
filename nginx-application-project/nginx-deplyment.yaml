@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: nginx-deployment
+  labels:
+    app: nginx-l
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx-l
+  template:
+    metadata:
+      labels:
+        app: nginx-l
+    spec:
+      containers:
+        - name: nginx
+          image: nginx
+          ports:
+            - containerPort: 80
+          env:
+            - name: USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: nginx-secret
+                  key: USERNAME
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nginx-secret
+                  key: PASSWORD
+            - name: APP_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: nginx-configmap
+                  key: APP_NAME
+          volumeMounts:
+            - name: mountvol
+              mountPath: /data
+      volumes:
+        - name: mountvol
+          hostPath:
+            path: /home/ahmed/data
+            type: DirectoryOrCreate
+    
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx-l
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+    
